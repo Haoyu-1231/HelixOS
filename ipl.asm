@@ -1,4 +1,4 @@
-; HelixOS 1.0 Build 02 (Classic 1)
+; HelixOS 1.0 Build 03 (Classic 1)
 ; IPL文件 (汇编)
 ; 编写：浩宇_1231
 ; 日期：2025.4.8
@@ -68,7 +68,7 @@ retry:
 		MOV		DL,0x00			; A驱动器
 		INT		0x13			; 调用磁盘BIOS
 
-		JNC		success			; 没出错的话跳转到success
+		JNC		next			; 没出错的话跳转到next
 		ADD		SI,1			; 往SI加1
 		CMP		SI,5			; 比较SI与5
 		JAE		error			; SI >= 5 时，跳转到error
@@ -93,24 +93,10 @@ next:
 		CMP		CH,CYLS
 		JB		readloop		; 如果CH < CYLS，则跳转到readloop
 
-		JMP		0xc200
-
 		MOV		ES,AX
 
-		MOV		SI,msg
-
-success:
-		MOV		SI,successmsg
-
-putloop2:
-		MOV		AL,[SI]
-		ADD		SI,1			; 给SI加1
-		CMP		AL,0
-		JE		fin
-		MOV		AH,0x0e			; 显示一个文字
-		MOV		BX,15			; 指定字符颜色
-		INT		0x10			; 调用显卡BIOS
-		JMP		putloop2
+end:
+		JMP		0xc200
 
 fin:
 		HLT						; 让CPU停止，等待指令
@@ -123,7 +109,7 @@ putloop3:
 		MOV		AL,[SI]
 		ADD		SI,1			; 给SI加1
 		CMP		AL,0
-		JE		fin
+		JE		end
 		MOV		AH,0x0e			; 显示一个文字
 		MOV		BX,15			; 指定字符颜色
 		INT		0x10			; 调用显卡BIOS
@@ -131,18 +117,13 @@ putloop3:
 
 msg:
 		DB		0x0a, 0x0a		; 换行两次
-		DB		"Loading HelixOS 1.0 Build 02 (Classic 1)...                                     "
+		DB		"Loading HelixOS 1.0 Build 03 (Classic 1)...                                     "
 		DB		0
 
 
 failmsg:
 		DB		0x0a		; 换行两次
 		DB		"Loading Data failed!"
-		DB		0
-
-successmsg:
-		DB		0x0a		; 换行两次
-		DB		"Loading Data succeed"
 		DB		0
 
 		TIMES 510 - ($ - $$) DB 0	; 最后填充0x00
