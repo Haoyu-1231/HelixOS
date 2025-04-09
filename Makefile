@@ -1,34 +1,44 @@
-# ?愭攝抲岲 QEMU
+# 编辑前，请先配置好 QEMU
 
-# 嘁??嶌
+MAKE     = make.exe -r
+NASM     = nasm.exe
+EDIMG    = edimg.exe
+QEMU     = qemu-system-x86_64.exe
+COPY     = copy
+DEL      = del
+
+# 默认动作
 
 default :
-	make.exe img
+	$(MAKE) img
 
-# 暥審惗惉??
+# 文件生成规则
 
 ipl.bin : ipl.asm Makefile
-	nasm.exe ipl.asm -o ipl.bin
+	$(NASM) ipl.asm -o ipl.bin
 
-HelixOS.img : ipl.bin Makefile
-	edimg.exe   imgin:fdimg0at.tek \
-		wbinimg src:ipl.bin len:512 from:0 to:0   imgout:HelixOS.img
+HelixOS.sys : HelixOS.asm Makefile
+	$(NASM) HelixOS.asm -o HelixOS.sys
 
-# 柦椷
+HelixOS.img : ipl.bin HelixOS.sys Makefile
+	$(EDIMG)   imgin:fdimg0at.tek \
+		wbinimg src:ipl.bin len:512 from:0 to:0 \
+		copy from:HelixOS.sys to:@: \
+		imgout:HelixOS.img
 
-asm :
-	make.exe -r ipl.bin
+# 命令
 
 img :
-	make.exe -r HelixOS.img
+	$(MAKE) HelixOS.img
 
 run :
-	make.exe img
-	qemu-system-x86_64.exe -L pc-bios -no-reboot -m 512 -display sdl -fda HelixOS.img
+	$(MAKE) img
+	$(QEMU) -L pc-bios -no-reboot -m 512 -display sdl -fda HelixOS.img
 
 clean :
-	-del ipl.bin
+	-$(DEL) ipl.bin
+	-$(DEL) HelixOS.sys
 
 src_only :
-	make.exe clean
-	-del HelixOS.img
+	$(MAKE) clean
+	-$(DEL) HelixOS.img
