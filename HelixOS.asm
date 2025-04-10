@@ -1,31 +1,169 @@
-; HelixOS 1.0 Build 03 (Classic 1)
-; ä¸»æ–‡ä»¶ (æ±‡ç¼–)
-; ç¼–å†™ï¼šæµ©å®‡_1231
-; æ—¥æœŸï¼š2025.4.8
+; HelixOS 1.0 Build 04 (Classic 1)
+; Ö÷ÎÄ¼þ (»ã±à)
+; ±àÐ´£ººÆÓî_1231
+; ÈÕÆÚ£º2025.4.8
 
-		ORG		0xc200			; è¿™ä¸ªç¨‹åºä¼šè¢«è¯»å…¥å“ªé‡Œ
+BOTPAK	EQU		0x00280000		; bootpackµÄ¼ÓÔØÎ»ÖÃ
+DSKCAC	EQU		0x00100000		; ´ÅÅÌ»º´æµÄÎ»ÖÃ
+DSKCAC0	EQU		0x00008000		; ´ÅÅÌ»º´æµÄÎ»ÖÃ£¨ÕæÊµÄ£Ê½£©
 
-        MOV     AL,0x13         ; VGAæ˜¾å¡ï¼Œ320x200x8ä½å½©è‰²
+; ÓÐ¹ØBOOT_INFO
+CYLS	EQU		0x0ff0			; Éè¶¨Æô¶¯Çø
+LEDS	EQU		0x0ff1
+VMODE	EQU		0x0ff2			; ÓÐ¹ØÑÕÉ«ÊýÄ¿µÄÐÅÏ¢¡£ÑÕÉ«µÄÎ»Êý¡£
+SCRNX	EQU		0x0ff4			; ·Ö±æÂÊµÄX£¨screen x£©
+SCRNY	EQU		0x0ff6			; ·Ö±æÂÊµÄY£¨screen y£©
+VRAM	EQU		0x0ff8			; Í¼Ïñ»º³åÇøµÄ¿ªÊ¼µØÖ·
+
+		ORG		0xc200			; Õâ¸ö³ÌÐò½«Òª±»×°ÔØµ½ÄÄ¸öµØ·½ÄØ£¿
+
+        MOV     AL,0x13         ; VGA ÏÔ¿¨£¬320x200x8Î»²ÊÉ«
         MOV     AH,0x00
         INT     0x10
+        MOV		BYTE [VMODE],8	; ¼ÇÂ¼»­ÃæÄ£Ê½
+		MOV		WORD [SCRNX],320
+		MOV		WORD [SCRNY],200
+		MOV		DWORD [VRAM],0x000a0000
+
+; ÓÃBIOSÈ¡µÃ¼üÅÌÉÏ¸÷ÖÖLEDÖ¸Ê¾µÆµÄ×´Ì¬
+
+		MOV		AH,0x02
+		INT		0x16 			; keyboard BIOS
+		MOV		[LEDS],AL
 
         MOV		SI,msg
 
 putloop:
 		MOV		AL,[SI]
-		ADD		SI,1			; ç»™SIåŠ 1
+		ADD		SI,1			; ¸øSI¼Ó1
 		CMP		AL,0
-		JE		fin
-		MOV		AH,0x0e			; æ˜¾ç¤ºä¸€ä¸ªæ–‡å­—
-		MOV		BX,15			; æŒ‡å®šå­—ç¬¦é¢œè‰²
-		INT		0x10			; è°ƒç”¨æ˜¾å¡BIOS
+		JE		entry
+		MOV		AH,0x0e			; ÏÔÊ¾Ò»¸öÎÄ×Ö
+		MOV		BX,15			; Ö¸¶¨×Ö·ûÑÕÉ«
+		INT		0x10			; µ÷ÓÃÏÔ¿¨BIOS
 		JMP		putloop
 
-fin:
-		HLT
-		JMP		fin
+entry:
+
+; ÎªÁËÊ¹PIC²»½ÓÊÜÈÎºÎÖÐ¶Ï
+;	¸ù¾ÝAT¼æÈÝ»úµÄ¹æ·¶£¬Èç¹ûÒª³õÊ¼»¯PIC£¬
+;	±ØÐëÔÚCLIÖ®Ç°Íê³É£¬·ñÔòÓÐÊ±»á³öÏÖ¹ÒÆð
+;	PICµÄ³õÊ¼»¯ÉÔºó½øÐÐ
+
+		MOV		AL,0xff
+		OUT		0x21,AL
+		NOP						; ÌýËµÓÐÐ©»úÐÍÁ¬ÐøÊ¹ÓÃOUTÃüÁî»á²»Ë³Àû£¬ËùÒÔ
+		OUT		0xa1,AL
+
+		CLI						; ½øÒ»²½ÔÚCPU¼¶±ð½ûÖ¹ÖÐ¶Ï
+
+; ÎªÁËÊ¹CPUÄÜ¹»·ÃÎÊ³¬¹ý1MBµÄÄÚ´æ£¬ÇëÉèÖÃA20GATE
+
+		CALL	waitkbdout
+		MOV		AL,0xd1
+		OUT		0x64,AL
+		CALL	waitkbdout
+		MOV		AL,0xdf			; enable A20
+		OUT		0x60,AL
+		CALL	waitkbdout
+
+; ±£»¤Ä£Ê½×ª»»
+
+		LGDT	[GDTR0]			; ÉèÖÃÔÝ¶¨GDT
+		MOV		EAX,CR0
+		AND		EAX,0x7fffffff	; ½«bit31ÉèÎª0£¨Òò½ûÖ¹·ÖÒ³£©
+		OR		EAX,0x00000001	; ½«bit0ÉèÖÃÎ»1£¨ÒÔ±ã½øÈë±£»¤Ä£Ê½£©
+		MOV		CR0,EAX
+		JMP		pipelineflush
+pipelineflush:
+		MOV		AX,1*8			;  ¿É¶ÁÐ´µÄ¶ÎÂä32Î»
+		MOV		DS,AX
+		MOV		ES,AX
+		MOV		FS,AX
+		MOV		GS,AX
+		MOV		SS,AX
+
+; bootpackµÄ´«ËÍ
+
+		MOV		ESI,bootpack	; ×ª·¢Ô´
+		MOV		EDI,BOTPAK		; ×ª·¢Ä¿µÄµØ
+		MOV		ECX,512*1024/4
+		CALL	memcpy
+
+; Ë³±ã°Ñ´ÅÅÌÊý¾ÝÒ²×ªÒÆµ½Ô­À´µÄÎ»ÖÃ
+
+; Ê×ÏÈ´ÓÒýµ¼ÉÈÇø¿ªÊ¼
+
+		MOV		ESI,0x7c00		; ×ª·¢Ô´
+		MOV		EDI,DSKCAC		; ×ª·¢Ä¿µÄµØ
+		MOV		ECX,512/4
+		CALL	memcpy
+
+; Ê£ÏÂµÄÈ«²¿
+
+		MOV		ESI,DSKCAC0+512	; ×ª·¢Ô´
+		MOV		EDI,DSKCAC+512	; ×ª·¢Ä¿µÄµØ
+		MOV		ECX,0
+		MOV		CL,BYTE [CYLS]
+		IMUL	ECX,512*18*2/4	; ´ÓÆø¸×Êý×ª»»Îª×Ö½ÚÊý/4
+		SUB		ECX,512/4		; ¿Û³ýIPLµÄ²¿·Ö
+		CALL	memcpy
+
+; ÒòÎªÎÒÒÑ¾­°ÑÔÚasmheadÖÐ±ØÐë×öµÄËùÓÐÊÂÇé¶¼×öÍêÁË£¬
+;	Ö®ºó¾Í½»¸øbootpack°É
+
+; bootpackµÄÆô¶¯
+
+		MOV		EBX,BOTPAK
+		MOV		ECX,[EBX+16]
+		ADD		ECX,3			; ECX += 3;
+		SHR		ECX,2			; ECX /= 4;
+		JZ		skip			; Ã»ÓÐÐèÒª×ª·¢µÄ¶«Î÷
+		MOV		ESI,[EBX+20]	; ×ª·¢Ô´
+		ADD		ESI,EBX
+		MOV		EDI,[EBX+12]	; ×ª·¢Ä¿µÄµØ
+		CALL	memcpy
+
+skip:
+		MOV		ESP,[EBX+12]	; Õ»³õÊ¼Öµ
+		JMP		DWORD 2*8:0x0000001b
+
+waitkbdout:
+		IN		 AL,0x64
+		AND		 AL,0x02
+		JNZ		waitkbdout		; Èç¹ûANDµÄ½á¹û²»Îª0£¬Ôò×ªµ½waitkbdout
+		RET
+
+memcpy:
+		MOV		EAX,[ESI]
+		ADD		ESI,4
+		MOV		[EDI],EAX
+		ADD		EDI,4
+		SUB		ECX,1
+		JNZ		memcpy			; Èç¹û¼õ·¨½á¹û²»Îª0£¬Ôò×ªµ½memcpy
+		RET
+; memcpyÈç¹û²»Íü¼Ç´øµØÖ·´óÐ¡Ç°×ºµÄ»°£¬Ò²¿ÉÒÔÓÃ×Ö·û´®Ö¸ÁîÀ´Ð´
+
+		ALIGNB	16
+
+GDT0:
+		RESB	8				; ¿ÕÑ¡ÔñÆ÷
+		DW		0xffff,0x0000,0x9200,0x00cf	; ¿É¶ÁÐ´µÄ¶ÎÂä32Î»
+		DW		0xffff,0x0000,0x9a28,0x0047	; ¿ÉÖ´ÐÐ¶Î32Î»£¨ÓÃÓÚbootpack£©
+
+		DW		0
+
+GDTR0:
+		DW		8*3-1
+		DD		GDT0
+
+		ALIGNB	16
+
+bootpack:
 
 msg:
-		DB		0x0a, 0x0a		; æ¢è¡Œä¸¤æ¬¡
-		DB		"Welcome to the HelixOS!"
+		DB		0x0a, 0x0a		; »»ÐÐÁ½´Î
+		DB		"Welcome to the HelixOS!                 "
+        DB		0x0a    		; »»ÐÐ
+        DB		"Now is in protect mode now"
 		DB		0

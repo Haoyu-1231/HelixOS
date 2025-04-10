@@ -1,4 +1,4 @@
-; HelixOS 1.0 Build 03 (Classic 1)
+; HelixOS 1.0 Build 04 (Classic 1)
 ; IPL文件 (汇编)
 ; 编写：浩宇_1231
 ; 日期：2025.4.8
@@ -95,7 +95,10 @@ next:
 
 		MOV		ES,AX
 
+; 接下来将跳转到HelixOS.sys
+
 end:
+		MOV		[0x0ff0],CH		; 记下IPL读到的程度
 		JMP		0xc200
 
 fin:
@@ -117,7 +120,7 @@ putloop3:
 
 msg:
 		DB		0x0a, 0x0a		; 换行两次
-		DB		"Loading HelixOS 1.0 Build 03 (Classic 1)...                                     "
+		DB		"Loading HelixOS 1.0 Build 04 (Classic 1)...                                     "
 		DB		0
 
 
