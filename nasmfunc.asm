@@ -1,3 +1,8 @@
+; HelixOS 1.0 Build 06 (Classic 1)
+; »ã±à¹¦ÄÜÎÄ¼þ (»ã±à)
+; ±àÐ´£ººÆÓî_1231
+; ÈÕÆÚ£º2025.4.12
+
 [BITS 32]
 
 		GLOBAL	_io_hlt, _io_cli, _io_sti, _io_stihlt
@@ -60,12 +65,12 @@ _io_out32:	; void io_out32(int port, int data);
 		RET
 
 _io_load_eflags:	; int io_load_eflags(void);
-		PUSHFD		; PUSH EFLAGS ¤È¤¤¤¦ÒâÎ¶
+		PUSHFD		; PUSH EFLAGS ï¿½È¤ï¿½ï¿½ï¿½ï¿½ï¿½Î¶
 		POP		EAX
 		RET
 
 _io_store_eflags:	; void io_store_eflags(int eflags);
 		MOV		EAX,[ESP+4]
 		PUSH	EAX
-		POPFD		; POP EFLAGS ¤È¤¤¤¦ÒâÎ¶
+		POPFD		; POP EFLAGS ï¿½È¤ï¿½ï¿½ï¿½ï¿½ï¿½Î¶
 		RET

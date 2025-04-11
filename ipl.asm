@@ -1,4 +1,4 @@
-; HelixOS 1.0 Build 05 (Classic 1)
+; HelixOS 1.0 Build 06 (Classic 1)
 ; IPL文件 (汇编)
 ; 编写：浩宇_1231
 ; 日期：2025.4.8

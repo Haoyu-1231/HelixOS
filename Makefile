@@ -1,11 +1,19 @@
-# 编辑前，请先配置好 MINGW-W64 和 QEMU
+# HelixOS 1.0 Build 06 (Classic 1)
+# 内核Makefile
+# 编写：浩宇_1231
+# 日期：2025.4.12
+
+# 说明：编译前，请先配置好 MINGW-W64 和 QEMU
 
 TOOLPATH = tools/
+INCPATH  = tools/include/
 
 MAKE     = $(TOOLPATH)make.exe -r
 NASM     = $(TOOLPATH)nasm.exe
-GCC      = gcc.exe -m32 -nostdinc -nostdlib -fno-builtin -ffreestanding -fno-stack-protector -Qn -fno-pic -fno-pie -fno-asynchronous-unwind-tables -mpreferred-stack-boundary=2 -fomit-frame-pointer -O0 -finput-charset=UTF-8 -w -c
+GCC      = gcc.exe -m32 -I$(INCPATH) -nostdinc -nostdlib -fno-builtin -ffreestanding -fno-stack-protector -Qn -fno-pic -fno-pie -fno-asynchronous-unwind-tables -mpreferred-stack-boundary=2 -fomit-frame-pointer -O0 -finput-charset=UTF-8 -w -c
 OBJ2BIM  = $(TOOLPATH)obj2bim.exe
+MAKEFONT = $(TOOLPATH)makefont.exe
+BIN2OBJ  = $(TOOLPATH)bin2obj.exe
 BIM2HRB  = $(TOOLPATH)bim2hrb.exe
 RULEFILE = $(TOOLPATH)helixos.rul
 EDIMG    = $(TOOLPATH)edimg.exe
@@ -32,9 +40,15 @@ bootpack.obj : bootpack.c Makefile
 nasmfunc.obj : nasmfunc.asm Makefile
 	$(NASM) -f win32 nasmfunc.asm -o nasmfunc.obj
 
-bootpack.bim : bootpack.obj nasmfunc.obj Makefile
+font.bin : font.txt Makefile
+	$(MAKEFONT) font.txt font.bin
+
+font.obj : font.bin Makefile
+	$(BIN2OBJ) font.bin font.obj _font
+
+bootpack.bim : bootpack.obj nasmfunc.obj font.obj Makefile
 	$(OBJ2BIM) @$(RULEFILE) out:bootpack.bim stack:3136k map:bootpack.map \
-		bootpack.obj nasmfunc.obj
+		bootpack.obj nasmfunc.obj font.obj
 # 3MB+64KB=3136KB
 
 bootpack.hrb : bootpack.bim Makefile
