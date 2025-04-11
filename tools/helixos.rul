@@ -1,0 +1,18 @@
+format:
+	/* 在本?中描述?接的政策 */
+	code(align:1, logic:0x24,      file:0x24);
+	data(align:4, logic:stack_end, file:code_end);
+
+file:
+	/* 在本?中未能在命令行中写完
+		.obj文件和.lib文件的?明 */
+	/* 此外，?个部分可以用完整路径来?写。 */
+	tools/harilibc.lib;
+	tools/golibc.lib;
+
+label:
+	/* 必?指定必??接的?? */
+	/* ???只需指定入口点即可 */
+	_HelixMain;
+
+	/* 上面3个部分的?序不能更改! */
